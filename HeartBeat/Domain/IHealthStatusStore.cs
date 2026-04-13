@@ -1,7 +1,7 @@
-﻿namespace HeartBeat;
+﻿namespace HeartBeat.Domain;
 
 public interface IHealthStatusStore
 {
     void Update(string serviceName, bool isHealthy);
-    Dictionary<string, bool> GetAll();
+    Dictionary<string, HealthStatus> GetAll();
 }

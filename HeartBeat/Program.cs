@@ -1,5 +1,6 @@
 using HeartBeat;
 using HeartBeat.Config;
+using HeartBeat.Domain;
 
 var builder = Host.CreateApplicationBuilder(args);
 

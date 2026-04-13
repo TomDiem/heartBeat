@@ -1,6 +1,4 @@
-﻿using System.IO.Compression;
-using HeartBeat.Config;
-using Microsoft.Extensions.Options;
+﻿using HeartBeat.Domain;
 
 namespace HeartBeat;
 
@@ -29,23 +27,32 @@ public class SummaryWorker : BackgroundService
             }
             else
             {
-                var healthy = statuses.Count(s => s.Value);
+                var healthy = statuses.Count(s => s.Value.IsHealthy);
                 var total = statuses.Count;
                 
-                foreach (var status in statuses)
+                foreach (var (name,status) in statuses)
                 {
-                    _logger.LogInformation(
-                    "  {Status} {Name}",
-                    status.Value ? "🟢" : "🔴", status.Key);
+                    var timeSinceLastCheck = DateTime.UtcNow - status.LastChecked;
+                    var isConsiderDown = status.ConsecutiveFailures >= 3;
+
+                    var level = isConsiderDown ? LogLevel.Warning : LogLevel.Information;
+
+                    _logger.Log(level,
+                        "HealthCheck {Name} Healthy={IsHealthy} Failures={Failures} LastCheckSecondsAgo={LastCheckAgo}",
+                        name,
+                        status.IsHealthy,
+                        status.ConsecutiveFailures,
+                        (int)timeSinceLastCheck.TotalSeconds
+                    );
                 }
 
                 _logger.LogInformation(
-                    "📊 Resumen: {Healthy}/{Total} servicios healthy",
+                    "Resumen: {Healthy}/{Total} servicios healthy",
                     healthy, total);
 
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
             }
-
+            
+            await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
         }
     }
 
